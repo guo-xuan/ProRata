@@ -8,10 +8,10 @@ ProteomeInfo::ProteomeInfo()
 
 ProteomeInfo::~ProteomeInfo()
 {
-	for( unsigned int i = 0; i < vpProteinInfo.size(); ++i )
+	for( int i = 0; i < vpProteinInfo.size(); ++i )
 		delete vpProteinInfo[i];
 
-	for( unsigned int j = 0; j < vpPeptideInfo.size(); ++j )
+	for( int j = 0; j < vpPeptideInfo.size(); ++j )
 		delete vpPeptideInfo[j];
 }
 
@@ -21,7 +21,7 @@ bool ProteomeInfo::processPeptidesXIC(string sIDFilename)
 	sicInfo.setFilename( sIDFilename );
 	sicInfo.process( vpPeptideInfo);
 
-	for( unsigned int i = 0; i < vpPeptideInfo.size(); i++ )
+	for( int i = 0; i < vpPeptideInfo.size(); i++ )
 	{
 		addPeptideInfo( vpPeptideInfo[i] );
 	}
@@ -35,7 +35,7 @@ void ProteomeInfo::addPeptideInfo( PeptideInfo * pCurrentPeptideInfo )
 	bool bIsNewLocus = true;
 	int iLocusNumber = vsLocus.size();
 	int i;
-	unsigned int j;
+	int j;
 	for( i = 0; i < iLocusNumber; ++i )
 	{
 		bIsNewLocus = true;
@@ -128,7 +128,7 @@ vector< ProteinInfo * > ProteomeInfo::getProteinInfo( string sKeyword )
 	string::size_type positionDescription;
 
 	vector< ProteinInfo * > vpProteinInfoOutput;	
-	unsigned int i;
+	int i;
 	for( i = 0; i < vpProteinInfo.size(); ++i )
 	{
 		positionLocus = vpProteinInfo[i]->getLocus().find( sKeyword );
@@ -150,7 +150,7 @@ vector< ProteinInfo * > ProteomeInfo::getProteinInfo4Locus( string sLocus )
 	if( sLocus == "" )
 		return vpProteinInfoOutput;
 
-	unsigned int i;
+	int i;
 	for( i = 0; i < vpProteinInfo.size(); ++i )
 	{
 		if( sLocus == vpProteinInfo[i]->getLocus() )
@@ -165,7 +165,7 @@ vector< ProteinInfo * > ProteomeInfo::getProteinInfo4Locus( string sLocus )
 void ProteomeInfo::getLocusList( vector< string > & vsLocusListRef )
 {
 	vsLocusListRef.clear();
-	unsigned int i;
+	int i;
 	for( i = 0; i < vpProteinInfo.size(); ++i )
 	{
 		vsLocusListRef.push_back( vpProteinInfo[i]->getLocus() );
@@ -177,7 +177,7 @@ void ProteomeInfo::getLocusDescriptionList( vector< string > & vsLocusListRef , 
 {
 	vsLocusListRef.clear();
 	vsDescriptionRef.clear();
-	unsigned int i;
+	int i;
 	for( i = 0; i < vpProteinInfo.size(); ++i )
 	{
 		vsLocusListRef.push_back( vpProteinInfo[i]->getLocus() );
@@ -212,9 +212,9 @@ void ProteomeInfo::sortPeptideInfoDescending( vector< PeptideInfo * > & vpPeptid
 	reverse( vpPeptideInfoInput.begin(), vpPeptideInfoInput.end() );	
 }	
 
-bool ProteomeInfo::writeFileQPR( string sRunBaseName )
+bool ProteomeInfo::writeFileQPR()
 {
-	string sFilename = ProRataConfig::getWorkingDirectory() + sRunBaseName + ".ProRata.xml";
+	string sFilename = ProRataConfig::getWorkingDirectory() + "ProRata_Quantification.qpr.xml";
 	FILE * pFileInitial;
 	if( ( pFileInitial = fopen( sFilename.c_str(), "w" ) ) == NULL  ) 
 	{
@@ -244,9 +244,9 @@ bool ProteomeInfo::writeFileQPR( string sRunBaseName )
 		return false;
 	}
 	
-	unsigned int i;
-	unsigned int j;
-	unsigned int k;
+	int i;
+	int j;
+	int k;
 
 	// sort the vpProteinInfo by their locus before writing to the file
 	sortProteinInfo( vpProteinInfo, "locus" );
@@ -874,15 +874,15 @@ vector< TiXmlElement * > ProteomeInfo::getElement(  TiXmlElement * pElement, con
 	return vpElementVector;
 }
 
-bool ProteomeInfo::writeFileTAB( string sRunBaseName )
+bool ProteomeInfo::writeFileTAB()
 {
 	unsigned int i;
 	// write the flat-file table for the protein quantification results
-	string sCompleteFilename = ProRataConfig::getWorkingDirectory() + sRunBaseName + ".ProRata_Protein.txt";
+	string sCompleteFilename = ProRataConfig::getWorkingDirectory() + "ProRata_Quantification_Protein.txt";
 	ofstream fStreamTro( sCompleteFilename.c_str() );
 	if( !fStreamTro )
 	{
-		cout << "ERROR: cannot write " << sCompleteFilename << endl;
+		cout << "ERROR: cannot write ProRata_Quantification_Protein.txt" << endl;
 		return false;
 	}
 
@@ -916,12 +916,12 @@ bool ProteomeInfo::writeFileTAB( string sRunBaseName )
 	
 	fStreamTro.close();
 
-	sCompleteFilename = ProRataConfig::getWorkingDirectory() + sRunBaseName + ".ProRata_Peptide.txt";
+	sCompleteFilename = ProRataConfig::getWorkingDirectory() +  "ProRata_Quantification_Peptide.txt";
 	// write the flat-file table for the peptide quantification results
 	ofstream fStreamTep( sCompleteFilename.c_str()  );
 	if( !fStreamTep )
 	{
-		cout << "ERROR: cannot write " << sCompleteFilename << endl;
+		cout << "ERROR: cannot write ProRata_Quantification_Peptide.txt" << endl;
 		return false;
 	}
 
@@ -965,15 +965,15 @@ bool ProteomeInfo::writeFileTAB( string sRunBaseName )
 }
 
 
-bool ProteomeInfo::writeFileLabelFree( string sRunBaseName )
+bool ProteomeInfo::writeFileLabelFree()
 {
 	unsigned int i;
 	// write the flat-file table for the protein quantification results
-	string sCompleteFilename = ProRataConfig::getWorkingDirectory() + sRunBaseName + ".ProRata_LabelFree_Protein.txt";
+	string sCompleteFilename = ProRataConfig::getWorkingDirectory() + "ProRata_LabelFree_Quantification_Protein.txt";
 	ofstream fStreamTro( sCompleteFilename.c_str() );
 	if( !fStreamTro )
 	{
-		cout << "ERROR: cannot write " << sCompleteFilename << endl;
+		cout << "ERROR: cannot write ProRata_LabelFree_Quantification_Protein.txt " << endl;
 		return false;
 	}
 
@@ -997,12 +997,12 @@ bool ProteomeInfo::writeFileLabelFree( string sRunBaseName )
 	
 	fStreamTro.close();
 
-	sCompleteFilename = ProRataConfig::getWorkingDirectory() + sRunBaseName + ".ProRata_LabelFree_Peptide.txt";
+	sCompleteFilename = ProRataConfig::getWorkingDirectory() +  "ProRata_LabelFree_Quantification_Peptide.txt";
 	// write the flat-file table for the peptide quantification results
 	ofstream fStreamTep( sCompleteFilename.c_str()  );
 	if( !fStreamTep )
 	{
-		cout << "ERROR: cannot write " << sCompleteFilename << endl;
+		cout << "ERROR: cannot write ProRata_LabelFree_Quantification_Peptide.txt" << endl;
 		return false;
 	}
 

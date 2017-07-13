@@ -30,7 +30,7 @@ class ProRataConfig
 		// whether or not to write chro files
 		static void setWriteChro(bool input){bIfWriteChro = input;};
 		static bool getWriteChro(){return bIfWriteChro;};
-		
+				
 		static string getWorkingDirectory()
 		{ return sWorkingDirectory; }
 		
@@ -39,16 +39,34 @@ class ProRataConfig
 		// If there is only one isotopologue, this is a label-free run and return true
 		static bool getIsLabelFree() {return bIsLabelFree;};
 
+		static string getMZxmlDirectory()
+		{ return sWorkingDirectory +  "mzXML" + ProRataConfig::getSeparator(); }
+
+		static string getXICxmlDirectory()
+		{ return sWorkingDirectory +  "xic" + ProRataConfig::getSeparator(); }
+
 		/*
 		 * get the version number of ProRata
 		 */
 		
-		static string getProRataVersion() { return "3.0"; }
+		static string getProRataVersion() { return "3.1"; }
 		
 		/*
 		 * the get functions for SIC extraction 
 		 * <SIC_EXTRACTION>
 		 */ 
+
+		// retrieve <MS_FILE_TYPE>
+		static string	getMSfileType()				{ return sMSFileType; }
+		static void 	setMSfileType(string input)		{ sMSFileType = input; }
+		
+		// retrieve <ID_FILE_TYPE>
+		static string	getIDfileType()				{ return sIDFileType; }
+		static void	setIDfileType(string input)		{ sIDFileType = input; }
+		
+		// retrieve <FASTA_FILE>
+		static string	getFASTAfilename()			{ return sFASTAFilename; }
+		static void	setFASTAfilename(string input)		{ sFASTAFilename = input; }
 		
 		// retrieve <RETENTION_TIME_INTERVAL> <MINUTES_BEFORE_MS2>
 		static float	getMinutesBeforeMS2()			{ return fMinutesBeforeMS2; }
@@ -228,6 +246,9 @@ class ProRataConfig
 		static void replaceDelimitor( string & sLine, char cOldDelimitor, char cNewDelimitor );
 
 		// variables from the SIC_EXTRACTION element
+		static string sMSFileType;
+		static string sIDFileType;
+		static string sFASTAFilename;
 		static float fMinutesBeforeMS2;
 		static float fMinutesAfterMS2;
 		static float fMinutesBetweenMS2;
