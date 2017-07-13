@@ -215,7 +215,6 @@ bool ProteinCombined::IsThereIndirectComparison( string sComparisonName )
 
 void ProteinCombined::computeValidity()
 {
-	/*
 	// for a ProteinCombined to be valid, it has to have at least a valid direct comparison or indirect comparison
 	bValidity = false;
 	int i = 0;
@@ -233,9 +232,6 @@ void ProteinCombined::computeValidity()
 			bValidity = true;
 		}
 	}
-	*/
-	// set every protein to be true.
-	bValidity = true;
 }
 
 bool LessProteinCombined::operator() ( ProteinCombined * pProtein1, ProteinCombined * pProtein2 ) const

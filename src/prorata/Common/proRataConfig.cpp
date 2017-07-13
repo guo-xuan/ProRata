@@ -3,9 +3,6 @@
 
 string ProRataConfig::sFilename = "ProRataConfig.xml";
 
-bool ProRataConfig::bIfWriteChro = false;
-bool ProRataConfig::bIsLabelFree = false;
-
 #if _WIN32
 	string ProRataConfig::sWorkingDirectory = ".\\";
 #else
@@ -13,6 +10,7 @@ bool ProRataConfig::bIsLabelFree = false;
 #endif
 
 // variables from the SIC_EXTRACTION element
+string ProRataConfig::sMSFileType = "mzXML";
 string ProRataConfig::sIDFileType = "DTASelect";
 string ProRataConfig::sFASTAFilename = "";
 float ProRataConfig::fMinutesBeforeMS2 = 2;
@@ -43,7 +41,7 @@ int ProRataConfig::iMinPeptideNumber = 2;
 double ProRataConfig::dMaxCIwidth = 7;
 
 double ProRataConfig::dMinLog2SNR = 1;
-double ProRataConfig::dMaxLog2SNR = 4;
+double ProRataConfig::dMaxLog2SNR = 3;
 
 double ProRataConfig::dMLEMinLog2Ratio = -7;
 double ProRataConfig::dMLEMaxLog2Ratio = 7;
@@ -84,7 +82,6 @@ bool ProRataConfig::setFilename( const string & sConfigFileName )
 	}
 
 	proRataConfigSingleton->getParameters( txdConfigFile );
-	proRataConfigSingleton->setIsLabelFree();
 	// If everything goes fine return 0.
 	return true;
 
@@ -296,22 +293,6 @@ bool ProRataConfig::getResidueAtomicComposition(residueMap & mIsotopologue)
 }
 
 
-void ProRataConfig::setIsLabelFree()
-{
-	residueMap mIsotopologue;
-	if(!getResidueAtomicComposition(mIsotopologue)){
-		bIsLabelFree = false;
-	}
-
-	if(mIsotopologue.size() == 1){
-		bIsLabelFree = true;
-	}
-	else{
-		bIsLabelFree = false;
-	}
-}
-
-
 void ProRataConfig::getParameters( TiXmlDocument & txdConfigFile )
 {
 
@@ -332,7 +313,10 @@ void ProRataConfig::getParameters( TiXmlDocument & txdConfigFile )
 	vsTagList.clear();
 	vsTagList.push_back( sMainTag );
 	vsTagList.push_back( sModuleTag );
-	vsTagList.push_back( "ID_FILE_TYPE" );
+	vsTagList.push_back( "MS_FILE_TYPE" );
+	sMSFileType = getValue( txdConfigFile, vsTagList );
+
+	vsTagList[2] = "ID_FILE_TYPE";
 	sIDFileType = getValue( txdConfigFile, vsTagList );
 	
 	vsTagList[2] = "RETENTION_TIME_INTERVAL";

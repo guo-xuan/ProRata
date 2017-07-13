@@ -9,18 +9,8 @@ PeptideInfo::PeptideInfo()
 	iChargeState = 0;
 	fMaximumScore = 0;
 	bValidity = false;
-	iMS2Count = 0;
-	fPeakTimeWidth = 0;
-	fLeftValleyTime = 0;
-	fRightValleyTime = 0;
-
 	dPCALog2Ratio = 0;
 	dPCALog2SNR = 0;
-
-	dPeakHeight = 0;
-	dPeakArea = 0;
-	dPeakSNR = 0;
-
 }
 
 PeptideInfo::~PeptideInfo()
@@ -28,47 +18,55 @@ PeptideInfo::~PeptideInfo()
 	// destructor
 }
 
+bool PeptideInfo::setPeptideRatio( PeptideRatio * pPeptideRatio )
+{
+	// Creat a TinyXML document
+	TiXmlDocument txdXICFile;
+
+	// Try loading the file.
+	string sCompleteFilename = ProRataConfig::getXICxmlDirectory() + sFilename;
+	if ( ! ( txdXICFile.LoadFile( sCompleteFilename.c_str() ) ) )
+	{
+		return false;
+		cout << "ERROR! Loading xic.xml file" << sFilename << endl;
+	}
+
+	TiXmlElement * pElementChro = txdXICFile.FirstChildElement( "EXTRACTED_ION_CHROMATOGRAMS" );
+	int iCurrentIdentifier;
+	for( pElementChro = pElementChro->FirstChildElement( "CHROMATOGRAM" ); 
+			pElementChro; 
+			pElementChro = pElementChro->NextSiblingElement( "CHROMATOGRAM" ) )
+	{
+		istringstream issStream( pElementChro->Attribute( "identifier" ) );
+		issStream >> iCurrentIdentifier;
+		if( iCurrentIdentifier == iIdentifier )
+		{
+			if( !pPeptideRatio->process( pElementChro ) )
+			{
+				return false;
+			}
+			else
+			{
+				setValues( pPeptideRatio );
+				return true;
+			}
+		}
+	}	
+
+	cout << "ERROR: cannot find the chromatogram with identifier " << iIdentifier << endl;
+	return false;
+}
+
 void PeptideInfo::setValues( PeptideRatio * pPeptideRatio )
 {
-	// common between PeptideRatio and PeptideLabelFree
 	iIdentifier = pPeptideRatio->getIdentifier();
 	sSequence = pPeptideRatio->getSequence();
 	iChargeState = pPeptideRatio->getChargeState();
 	fMaximumScore = pPeptideRatio->getMaximumScore();
 	bValidity = pPeptideRatio->getValidity();
-	pPeptideRatio->getLocusDescription( vsLocus, vsDescription );
-	iMS2Count = pPeptideRatio->getMS2ScanNumber().size();
-	fLeftValleyTime = pPeptideRatio->getLeftValleyTime();
-	fRightValleyTime = pPeptideRatio->getRightValleyTime();
-	fPeakTimeWidth = fRightValleyTime - fLeftValleyTime;
-	vfMS2Time = pPeptideRatio->getMS2Time(); 
-	vsAllIDfilename = pPeptideRatio->getAllIDfilename();
-
-	// specific for PeptideRatio
 	dPCALog2Ratio = pPeptideRatio->getLog2PCARatio();
 	dPCALog2SNR = pPeptideRatio->getLog2PCASN();
-}
-
-void PeptideInfo::setValues( PeptideLabelFree * pPeptideLabelFree )
-{
-	// common between PeptideRatio and PeptideLabelFree	
-	iIdentifier = pPeptideLabelFree->getIdentifier();
-	sSequence = pPeptideLabelFree->getSequence();
-	iChargeState = pPeptideLabelFree->getChargeState();
-	fMaximumScore = pPeptideLabelFree->getMaximumScore();
-	bValidity = pPeptideLabelFree->getValidity();
-	pPeptideLabelFree->getLocusDescription( vsLocus, vsDescription );
-	iMS2Count = pPeptideLabelFree->getMS2ScanNumber().size();
-	fLeftValleyTime = pPeptideLabelFree->getLeftValleyTime();
-	fRightValleyTime = pPeptideLabelFree->getRightValleyTime();
-	fPeakTimeWidth = fRightValleyTime - fLeftValleyTime;
-	vfMS2Time = pPeptideLabelFree->getMS2Time(); 
-	vsAllIDfilename = pPeptideLabelFree->getAllIDfilename();
-
-	// specific for PeptideLabelFree	
-	dPeakHeight = pPeptideLabelFree->getPeakHeight();
-	dPeakArea = pPeptideLabelFree->getPeakArea();
-	dPeakSNR = pPeptideLabelFree->getPeakSNR();
+	pPeptideRatio->getLocusDescription( vsLocus, vsDescription );
 }
 
 void PeptideInfo::setFilename( string sFilenameInput )

@@ -17,10 +17,40 @@ PeptideRatio::~PeptideRatio()
 	// destructor
 }
 
-bool PeptideRatio::process( const Chromatogram & inputChro )
+bool PeptideRatio::process( string sChroFilename )
 {
-	peptideChro = inputChro;
+	// read the chro file
+	if( !peptideChro.readChroFile( sChroFilename ) )
+	{
+		bValidity = false;
+		return false;
+	}
 
+	if( !computeRatio() )
+	{
+		bValidity = false;
+		return false;
+	}
+
+	return true;
+}
+
+  
+bool PeptideRatio::process( TiXmlElement * pElementChro )
+{
+
+	// process the XML chromatogram element
+	if( !peptideChro.readXicElement( pElementChro ) )
+	{
+		bValidity = false;
+		return false;
+	}
+
+#ifdef DEBUG
+	cout << "processing XIC " << getIdentifier() << endl;
+#endif
+		
+	
 	if( !computeRatio() )
 	{
 		bValidity = false;
@@ -40,7 +70,7 @@ bool PeptideRatio::process( const Chromatogram & inputChro )
 			bValidity = false;
 	}
 
-	return true;
+	return true;	
 }
 
 bool PeptideRatio::computeRatio()

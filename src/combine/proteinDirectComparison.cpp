@@ -21,9 +21,6 @@ ProteinDirectComparison::ProteinDirectComparison()
 	iValidReplicateNumber = 0;
 	iValidPeptideNumber = 0;
 	iQuantifiedPeptides = 0;
-	dMLEMinLog2Ratio = 0;
-	dMLEMaxLog2Ratio = 0;
-	dLog2RatioDiscretization = 0.1;
 }
 
 ProteinDirectComparison::~ProteinDirectComparison()
@@ -34,13 +31,6 @@ ProteinDirectComparison::~ProteinDirectComparison()
 bool ProteinDirectComparison::runQuantification( string sInputLocus )
 {
 	sLocus = sInputLocus;
-	dLog2Ratio = 0;
-	bValidity = false;
-	dLowerLimitCI = 0;
-	dUpperLimitCI = 0;
-
-	iValidReplicateNumber = 0;
-	iValidPeptideNumber = 0;
 
 	/*
 	 *  run quantification for all replicates
@@ -54,30 +44,6 @@ bool ProteinDirectComparison::runQuantification( string sInputLocus )
 		}
 	}
 	
-
-	// setup vdLog2Ratio and vdLnLikelihood
-	vdLog2Ratio.clear();
-	vdLnLikelihood.clear();
-	double dCurrentLogRatio = dMLEMinLog2Ratio;
-	while( dCurrentLogRatio <= dMLEMaxLog2Ratio)
-	{
-		vdLog2Ratio.push_back( dCurrentLogRatio );
-		vdLnLikelihood.push_back(0);
-		dCurrentLogRatio = dCurrentLogRatio + dLog2RatioDiscretization;
-		// make it exact zero
-		if( fabs( dCurrentLogRatio ) < 0.000000001 )
-			dCurrentLogRatio = 0;
-	}
-
-	if(vdLog2Ratio.size() < 3)
-	{
-		cout << "ERROR: Problem with maximum log2ratio, minimum log2ratio or discretization interval at Direct Comparison." << endl;
-		bValidity = false;
-		return false;
-
-	}
-	
-
 	/*
 	 * combine the profile likelihood curves from the replicates
 	 */
@@ -85,47 +51,49 @@ bool ProteinDirectComparison::runQuantification( string sInputLocus )
 	vector<double> vdLog2RatioTemp;
 	vector<double> vdLnLikelihoodTemp;
 	
-
+	dLog2Ratio = 0;
+	bValidity = false;
+	dLowerLimitCI = 0;
+	dUpperLimitCI = 0;
+	vdLog2Ratio.clear();
+	vdLnLikelihood.clear();
+	iValidReplicateNumber = 0;
+	iValidPeptideNumber = 0;
 	
 	bool bFlagFirstValidReplicate = true;
-	int j;
-	unsigned int k;
-	double dTempLog2RatioDifference = 1000000.0;
-	double dTempLnLikelihood = 0;
 	for( i = 0; i < vReplicate.size(); ++i )
 	{
-		if( vReplicate[i].isValid() )
+		// initialize the profile likelihood curve with the first valid replicate
+		if( vReplicate[i].isValid() && bFlagFirstValidReplicate )
 		{
-			bFlagFirstValidReplicate = false;
 			vReplicate[i].getProfileLikelihoodCurve( vdLog2RatioTemp, vdLnLikelihoodTemp );
+			vdLog2Ratio = vdLog2RatioTemp;
+			vdLnLikelihood = vdLnLikelihoodTemp;
+			bFlagFirstValidReplicate = false;
+		}
 
-			for( j = 0; j < vdLog2Ratio.size(); ++j )
+		// combine with the rest of valid replicates
+		if( vReplicate[i].isValid() && !bFlagFirstValidReplicate )
+		{
+			vReplicate[i].getProfileLikelihoodCurve( vdLog2RatioTemp, vdLnLikelihoodTemp );
+			for( int j = 0; j < vdLog2Ratio.size(); ++j )
 			{
-				dTempLog2RatioDifference = 1000000.0;
-				for( k = 0; k < vdLog2RatioTemp.size(); ++k )
+				if( fabs(vdLog2Ratio[j] - vdLog2RatioTemp[j]) < 0.001)
 				{
-					if( dTempLog2RatioDifference > fabs(vdLog2Ratio[j] - vdLog2RatioTemp[k]))
-					{
-						dTempLog2RatioDifference =  fabs(vdLog2Ratio[j] - vdLog2RatioTemp[k]);
-						dTempLnLikelihood = vdLnLikelihoodTemp[k];
-					}
+					vdLnLikelihood[j] = vdLnLikelihood[j] + vdLnLikelihoodTemp[j];
 				}
-				vdLnLikelihood[j] = vdLnLikelihood[j] + dTempLnLikelihood;
+				else
+				{
+					cout << "ERROR: inconsistant log2 ratio bins. check <LOG2_RATIO>-<MINIMUM> <LOG2_RATIO>-<MAXIMUM> <LOG2_RATIO_DISCRETIZATION>" << endl;
+					return false;
+				}
 			}
-
 		}
 	}
-	/*
-	for( i = 0; i < vdLnLikelihood.size(); i++ )
-	{
-		cout << vdLog2Ratio[i] << " - " << vdLnLikelihood[i] << endl;
 
-	}
-	*/
 	if(bFlagFirstValidReplicate)
 	{
 		// this locus is not found in any replicates
-		bValidity = false;
 		return true;
 	}
 
@@ -190,9 +158,6 @@ bool ProteinDirectComparison::runQuantification( string sInputLocus )
 	if( dUpperLimitCI > dMLEMaxLog2Ratio )
 		dUpperLimitCI = dMLEMaxLog2Ratio;
 
-//	cout << "Direct Comparison dLog2Ratio = " << dLog2Ratio << " dUpperLimitCI = " << dUpperLimitCI << " dLowerLimitCI " << dLowerLimitCI << endl;
-
-
 	/*
 	 * Determine the validity of this protein according to the filterin criteria
 	 */
@@ -205,7 +170,7 @@ bool ProteinDirectComparison::runQuantification( string sInputLocus )
 		return true;
 	}
 
-	j = 0;
+	int j = 0;
 	bool bValidity0 = false;
 	double dLogRatio0 = 0;
 	double dCI0upper = 0;
@@ -361,7 +326,7 @@ string ProteinDirectComparison::getDenominator()
 {
 	return sDenominator;
 }
-/*
+
 double  ProteinDirectComparison::getMLEMinLog2Ratio()
 {
 	return dMLEMinLog2Ratio;
@@ -371,7 +336,7 @@ double  ProteinDirectComparison::getMLEMaxLog2Ratio()
 {
 	return dMLEMaxLog2Ratio;
 }
-*/
+
 double  ProteinDirectComparison::getLog2RatioDiscretization()
 {
 	return dLog2RatioDiscretization;
@@ -379,40 +344,27 @@ double  ProteinDirectComparison::getLog2RatioDiscretization()
 
 bool ProteinDirectComparison::addReplicate( ProteinReplicate tempProteinReplicate )
 {
-	double dMLEMinLog2RatioTemp = 0;
-	double dMLEMaxLog2RatioTemp = 0;
-	double dLog2RatioDiscretizationTemp = 0.1;
-
-	if( !tempProteinReplicate.checkRatio(sNumerator, sDenominator) )
-	{
-		cout << "ERROR: Inconsistant numerator and denominator between Direct Comparison " << sName << " and Replicate " << tempProteinReplicate.getName() << endl;
-		return false;
-	}
-
-	tempProteinReplicate.computeLog2RatioSetting( dMLEMinLog2RatioTemp, dMLEMaxLog2RatioTemp, dLog2RatioDiscretizationTemp );
-
+	double dMLEMinLog2RatioTemp;
+	double dMLEMaxLog2RatioTemp;
+	double dLog2RatioDiscretizationTemp;
+	tempProteinReplicate.getLog2RatioSetting(dMLEMinLog2RatioTemp, dMLEMaxLog2RatioTemp, dLog2RatioDiscretizationTemp);
+	
 	if( vReplicate.size() == 0 )
 	{
 		// the first replicate
-		dLog2RatioDiscretization = dLog2RatioDiscretizationTemp;
 		dMLEMinLog2Ratio = dMLEMinLog2RatioTemp;
-		dMLEMaxLog2Ratio = dMLEMaxLog2RatioTemp;		
+		dMLEMaxLog2Ratio = dMLEMaxLog2RatioTemp;
+		dLog2RatioDiscretization = dLog2RatioDiscretizationTemp;		
 	}
 	else
 	{
-		if(dLog2RatioDiscretization != dLog2RatioDiscretizationTemp)
+		if( (dMLEMinLog2Ratio != dMLEMinLog2RatioTemp) ||
+				(dMLEMaxLog2Ratio != dMLEMaxLog2RatioTemp) ||
+				(dLog2RatioDiscretization != dLog2RatioDiscretizationTemp) )
 		{
-			cout << "ERROR: all replicates to be combined must have the same <LOG2_RATIO_DISCRETIZATION> in their ProRataConfig.xml! " << endl;
+			cout << "ERROR: all replicates to be combined must have the same <LOG2_RATIO>-<MINIMUM> <LOG2_RATIO>-<MAXIMUM> <LOG2_RATIO_DISCRETIZATION> in their ProRataConfig.xml! " << endl;
 			return false;
 		}
-		if( dMLEMinLog2Ratio > dMLEMinLog2RatioTemp )
-		{
-			dMLEMinLog2Ratio = dMLEMinLog2RatioTemp;
-		}
-		if( dMLEMaxLog2Ratio < dMLEMaxLog2RatioTemp )
-		{
-			dMLEMaxLog2Ratio = dMLEMaxLog2RatioTemp;
-		}		
 	}
 	vReplicate.push_back( tempProteinReplicate );
 	return true;

@@ -3,8 +3,6 @@
 ProteinReplicate::ProteinReplicate()
 {
 	sName = "";
-	sNormalizationMethod = "";
-	dNormalizationValue = 0;	
 	pProteomeInfo = NULL;
 
 	bRemoveAmbiguousPeptide = true;
@@ -14,17 +12,13 @@ ProteinReplicate::ProteinReplicate()
 	dMaxLog2SNR = 0;
 	dMLEMinLog2Ratio = 0;
 	dMLEMaxLog2Ratio = 0;
-	dLog2RatioDiscretization = 0.1;
+	dLog2RatioDiscretization = 0;
 	dSDSlope = 0;
 	dSDIntercept = 0;
 	dMeanSlope = 0;
 	dMeanIntercept = 0; 
 	dSmoothingProbSpace = 0;
 	dLnLikelihoodCutoffOffset = 0;
-
-	sOriginalNumerator = "";
-	sOriginalDenominator = "";
-	bReverseRatio = false;
 	
 	sLocus = "";
 	pProteinInfo = NULL;
@@ -48,11 +42,8 @@ void ProteinReplicate::setName( string sNameConfig )
 	sName = sNameConfig;
 }
 
-void ProteinReplicate::setProteomeInfo( ProteomeInfo * pProteomeInfoConfig , string sNormalizationMethodConfig, double dNormalizationValueConfig )
+void ProteinReplicate::setProteomeInfo( ProteomeInfo * pProteomeInfoConfig )
 {
-	int iDiscretizationUnits = 0;
-
-
 	pProteomeInfo = pProteomeInfoConfig;
 
 	bRemoveAmbiguousPeptide	= ProRataConfig::getRemoveAmbiguousPeptides();		
@@ -62,59 +53,14 @@ void ProteinReplicate::setProteomeInfo( ProteomeInfo * pProteomeInfoConfig , str
 	dMaxLog2SNR		= ProRataConfig::getMaxLog2SNR();				
 	dMLEMinLog2Ratio	= ProRataConfig::getMLEMinLog2Ratio();			
 	dMLEMaxLog2Ratio	= ProRataConfig::getMLEMaxLog2Ratio();			
-//	dLog2RatioDiscretization	= ProRataConfig::getLog2RatioDiscretization();
-
-	//  hardcode dLog2RatioDiscretization to 0.1	
-	dLog2RatioDiscretization = 0.1;
-	
-	// round dMLEMinLog2Ratio and dMLEMaxLog2Ratio to units of dLog2RatioDiscretization
-	iDiscretizationUnits = (int)( dMLEMinLog2Ratio / dLog2RatioDiscretization + 0.5 );
-	dMLEMinLog2Ratio = dLog2RatioDiscretization * iDiscretizationUnits;
-
-	iDiscretizationUnits = (int)( dMLEMaxLog2Ratio / dLog2RatioDiscretization + 0.5 );
-	dMLEMaxLog2Ratio = dLog2RatioDiscretization * iDiscretizationUnits;
-	
+	dLog2RatioDiscretization	= ProRataConfig::getLog2RatioDiscretization();		
 	dSDSlope		= ProRataConfig::getSDSlope();				
 	dSDIntercept		= ProRataConfig::getSDIntercept();			
 	dMeanSlope		= ProRataConfig::getMeanSlope();				
 	dMeanIntercept		= ProRataConfig::getMeanIntercept();			
 	dSmoothingProbSpace	= ProRataConfig::getSmoothingProbilitySpace();		
-	dLnLikelihoodCutoffOffset	= ProRataConfig::getLnLikelihoodCutoffOffset();
-	sOriginalNumerator = ProRataConfig::getNumeratorIsotopologue();
-	sOriginalDenominator = ProRataConfig::getDenominatorIsotopologue();	
+	dLnLikelihoodCutoffOffset	= ProRataConfig::getLnLikelihoodCutoffOffset();		
 
-	sNormalizationMethod = sNormalizationMethodConfig;
-	dNormalizationValue = dNormalizationValueConfig;
-	// round the dNormalizationValue to units of dLog2RatioDiscretization
-	if( dNormalizationValue >= 0 )
-		iDiscretizationUnits = (int)( dNormalizationValue / dLog2RatioDiscretization + 0.5 );
-	else
-		iDiscretizationUnits = (int)( dNormalizationValue / dLog2RatioDiscretization - 0.5 );
-	dNormalizationValue = dLog2RatioDiscretization * iDiscretizationUnits;
-//	cout << " dNormalizationValue = " << dNormalizationValue << endl;
-
-}
-
-bool ProteinReplicate::checkRatio(string sDirectComparisonNumerator, string sDirectComparisonDenominator)
-{
-	if(sOriginalNumerator == sDirectComparisonNumerator && 
-	   sOriginalDenominator == sDirectComparisonDenominator )
-	{
-		bReverseRatio = false;
-		return true;
-	}
-	else if( sOriginalDenominator == sDirectComparisonNumerator && 
-	         sOriginalNumerator == sDirectComparisonDenominator )
-	{
-		bReverseRatio = true;
-		return true;
-	}
-	else
-	{
-		cout << "ERROR: Replicate Numerator : Denominator = " << sOriginalNumerator << " : " << sOriginalDenominator << 
-		       	" Direct Comparison Numerator : Denominator = " << sDirectComparisonNumerator << " : " << sDirectComparisonDenominator << endl; 
-		return false;
-	}	
 }
 
 bool ProteinReplicate::runQuantification( string sInputLocus )
@@ -183,66 +129,12 @@ bool ProteinReplicate::runQuantification( string sInputLocus )
 	dLowerLimitCI = pProteinRatio->getLowerLimitCI();
 	dUpperLimitCI = pProteinRatio->getUpperLimitCI();
 
-	// normalization
-	unsigned int i;
-	if( sNormalizationMethod == "Plus" )
-	{
-		for( i = 0; i < vdLog2Ratio.size(); i++)
-		{
-			vdLog2Ratio[i] = vdLog2Ratio[i] + dNormalizationValue;
-		}
-
-		dLog2Ratio = dLog2Ratio + dNormalizationValue;
-		dLowerLimitCI = dLowerLimitCI + dNormalizationValue;
-		dUpperLimitCI = dUpperLimitCI + dNormalizationValue;		
-
-	}
-	else if ( sNormalizationMethod == "Minus" ) 
-	{
-		for( i = 0; i < vdLog2Ratio.size(); i++)
-		{
-			vdLog2Ratio[i] = vdLog2Ratio[i] - dNormalizationValue;
-		}
-
-		dLog2Ratio = dLog2Ratio - dNormalizationValue;
-		dLowerLimitCI = dLowerLimitCI - dNormalizationValue;
-		dUpperLimitCI = dUpperLimitCI - dNormalizationValue;
-	}
-	else
-	{
-		// no normalization
-	}
-
-	if( fabs( dLowerLimitCI ) < 0.000000001 )
-		dLowerLimitCI = 0;
-	if( fabs( dUpperLimitCI ) < 0.000000001 )
-		dUpperLimitCI = 0;
-	if( fabs( dLog2Ratio ) < 0.000000001 )
-		dLog2Ratio = 0;
-
-	// reverse the ratio, if needed
-	if( bReverseRatio )
-	{	
-		for( i = 0; i < vdLog2Ratio.size(); i++)
-		{
-			vdLog2Ratio[i] = -vdLog2Ratio[i];
-		}
-		reverse( vdLog2Ratio.begin(), vdLog2Ratio.end() );
-		reverse( vdLnLikelihood.begin(), vdLnLikelihood.end() );
-
-		dLog2Ratio = -dLog2Ratio;
-
-		double dTemp = dUpperLimitCI;	
-		dUpperLimitCI = -dLowerLimitCI ;
-		dLowerLimitCI = -dTemp;		
-	}
+	
 
 	// validity is retrieved from pProteinInfo read from QPR file
 	bValidity = pProteinInfo->getValidity();
 	iQuantifiedPeptides = pProteinInfo->getQuantifiedPeptides();
 	delete pProteinRatio;
-
-//	cout << " dLog2Ratio = " << dLog2Ratio << " dUpperLimitCI = " << dUpperLimitCI << " dLowerLimitCI " << dLowerLimitCI << endl;
 	
 	return true;
 }
@@ -288,46 +180,13 @@ string ProteinReplicate::getLocus()
 	return sLocus;
 }
 
-
-void ProteinReplicate::computeLog2RatioSetting(double & dMLEMinLog2RatioRef, double & dMLEMaxLog2RatioRef, double & dLog2RatioDiscretizationRef)
+void ProteinReplicate::getLog2RatioSetting(double & dMLEMinLog2RatioRef, double & dMLEMaxLog2RatioRef, double & dLog2RatioDiscretizationRef)
 {
-
-	// normalization
-	if( sNormalizationMethod == "Plus" )
-	{
-		dMLEMinLog2RatioRef = dMLEMinLog2Ratio + dNormalizationValue;
-		dMLEMaxLog2RatioRef = dMLEMaxLog2Ratio + dNormalizationValue;		
-
-	}
-	else if ( sNormalizationMethod == "Minus" ) 
-	{
-		dMLEMinLog2RatioRef = dMLEMinLog2Ratio - dNormalizationValue;
-		dMLEMaxLog2RatioRef = dMLEMaxLog2Ratio - dNormalizationValue;
-	}
-	else
-	{
-		dMLEMinLog2RatioRef = dMLEMinLog2Ratio;
-		dMLEMaxLog2RatioRef = dMLEMaxLog2Ratio;
-	}	
-
-	// reverse the ratio, if needed
-	double dTemp;
-	if( bReverseRatio )
-	{	
-		dTemp = dMLEMinLog2RatioRef;
-		dMLEMinLog2RatioRef = -dMLEMaxLog2RatioRef ;
-		dMLEMaxLog2RatioRef = -dTemp;		
-	}
-
+	dMLEMinLog2RatioRef = dMLEMinLog2Ratio;
+	dMLEMaxLog2RatioRef = dMLEMaxLog2Ratio;
 	dLog2RatioDiscretizationRef = dLog2RatioDiscretization;	
 }
 
-/*
-double ProteinReplicate::getLog2RatioDiscretization()
-{
-	return dLog2RatioDiscretization;
-}
-*/
 string ProteinReplicate::getName()
 {
 	return sName;

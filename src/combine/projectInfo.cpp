@@ -73,61 +73,16 @@ bool ProjectInfo::writeFileTAB( string sTabFilename )
 
 	fStreamTro << "Protein Quantification Results by ProRata " << ProRataConfig::getProRataVersion() <<  endl;
 	fStreamTro << endl;
+	fStreamTro << "Configurations" << endl;
+	fStreamTro << endl;
 
 	vector< ProteinDirectComparison > vCurrentDirectComparison;
 	vector< ProteinIndirectComparison > vCurrentIndirectComparison;
 	vector< ProteinReplicate > vCurrentReplicate;
-	vCurrentDirectComparison.clear();
-	vCurrentDirectComparison = templateProteinCombined.getProteinDirectComparisonVector();
-	vCurrentIndirectComparison.clear();
-	vCurrentIndirectComparison = templateProteinCombined.getProteinIndirectComparisonVector();
+
 	int i;
 	int j;
 	int k;
-	
-	// print the configurations
-
-	fStreamTro << "Configuration:" << endl;
-	for( j = 0; j < vCurrentDirectComparison.size(); ++j )
-	{
-		vCurrentReplicate.clear();
-		vCurrentReplicate = vCurrentDirectComparison[j].getProteinReplicateVector();
-		fStreamTro << "Direct Comparison, " << vCurrentDirectComparison[j].getName() << ", measures ratios of " <<
-			vCurrentDirectComparison[j].getNumerator() << " (Numerator) to " << vCurrentDirectComparison[j].getDenominator() 
-			<< " (Denominator) by combining "<< vCurrentReplicate.size() ;
-		if(vCurrentReplicate.size()>1)	
-		{
-			fStreamTro << " Replicates: ";
-			for( k = 0; k < vCurrentReplicate.size()-2; ++k )
-			{
-				fStreamTro << vCurrentReplicate[k].getName() << ", ";
-			}
-			fStreamTro << vCurrentReplicate[vCurrentReplicate.size()-2].getName() << " and " << vCurrentReplicate.back().getName() << "." << endl;
-		}
-		else if(vCurrentReplicate.size() == 1 )
-		{
-			fStreamTro << " Replicate: " << vCurrentReplicate.back().getName() << "." << endl;
-		}
-		else
-		{
-			cout << "ERROR: At least one Replicate is needed for a Direct Comparison" << endl;
-		}
-
-	}
-	for( j = 0; j < vCurrentIndirectComparison.size(); ++j )
-	{			
-		fStreamTro << "Indirect Comparison, " << vCurrentIndirectComparison[j].getName() << ", measures ratios of " << 
-			vCurrentIndirectComparison[j].getNumerator() << " (Numerator) to " << vCurrentIndirectComparison[j].getDenominator() 
-			<< " (Denominator) by combining Direct Comparisons: " << vCurrentIndirectComparison[j].getDirectComparisonName0() 
-			<< " and " << vCurrentIndirectComparison[j].getDirectComparisonName1() << "." << endl;		
-	}
-	fStreamTro << endl;
-
-	fStreamTro << "Normalization:" << endl;
-	fStreamTro << sNormalizationPrintOut;
-	fStreamTro << endl;
-
-
 	bool bValidityTemp;
 	double dLog2RatioTemp;
 	double dLowerLimitCITemp;
@@ -140,43 +95,42 @@ bool ProjectInfo::writeFileTAB( string sTabFilename )
 	
 	// print column name 
 	string sName;
-	fStreamTro << "Locus"  << '\t' ;
-	for( j = 0; j < vCurrentDirectComparison.size(); ++j )
-	{
-		vCurrentReplicate.clear();
-		vCurrentReplicate = vCurrentDirectComparison[j].getProteinReplicateVector();
-		for( k = 0; k < vCurrentReplicate.size(); ++k )
-		{
-			sName = "{" + vCurrentReplicate[k].getName() + "}" + vCurrentDirectComparison[j].getName();
-				fStreamTro << sName + "::Log2ratio" << '\t'
-					<< sName + "::CI" << '\t'
-					<< sName + "::LowerCIL" << '\t'
-					<< sName + "::UpperCIL" << '\t'
-					<< sName + "::Peptides" << '\t';  
-		}
-		sName = vCurrentDirectComparison[j].getName();
-		fStreamTro << sName + "::Log2ratio" << '\t'
-			<< sName + "::CI" << '\t'
-			<< sName + "::LowerCIL" << '\t'
-			<< sName + "::UpperCIL" << '\t'
-			<< sName + "::Peptides" << '\t';  
-		
-	}
-	for( j = 0; j < vCurrentIndirectComparison.size(); ++j )
-	{
-		sName = vCurrentIndirectComparison[j].getName();
-		fStreamTro << sName + "::Log2ratio" << '\t'
-			<< sName + "::CI" << '\t'
-			<< sName + "::LowerCIL" << '\t' 			
-			<< sName + "::UpperCIL" << '\t' ;			
+			fStreamTro << "locus"  << '\t' ;
+			vCurrentDirectComparison.clear();
+			vCurrentDirectComparison = templateProteinCombined.getProteinDirectComparisonVector();
+			vCurrentIndirectComparison.clear();
+			vCurrentIndirectComparison = templateProteinCombined.getProteinIndirectComparisonVector();
+			for( j = 0; j < vCurrentDirectComparison.size(); ++j )
+			{
+				vCurrentReplicate.clear();
+				vCurrentReplicate = vCurrentDirectComparison[j].getProteinReplicateVector();
+				for( k = 0; k < vCurrentReplicate.size(); ++k )
+				{
+					sName = vCurrentDirectComparison[j].getName() + "_" + vCurrentReplicate[k].getName();
+						fStreamTro << sName + "_log2ratio" << '\t'
+							<< sName + "_lowerCI" << '\t'
+							<< sName + "_upperCI" << '\t' 
+							<< sName + "_QuantifiedPeptides" << '\t';  
+				}
+				sName = vCurrentDirectComparison[j].getName();
+				fStreamTro << sName + "_log2ratio" << '\t'
+					<< sName + "_lowerCI" << '\t'
+					<< sName + "_upperCI" << '\t'
+					<< sName + "_QuantifiedPeptides" << '\t';  
+				
+			}
+			for( j = 0; j < vCurrentIndirectComparison.size(); ++j )
+			{
+				sName = vCurrentIndirectComparison[j].getName();
+				fStreamTro << sName + "_log2ratio" << '\t'
+					<< sName + "_lowerCI" << '\t'
+					<< sName + "_upperCI" << '\t' ;			
 
-	}
-	fStreamTro << "Description"  << endl;
+			}
+			fStreamTro << "description"  << endl;
 
+	
 	// print the results
-	ostringstream ossConfidenceInterval;
-	ossConfidenceInterval << fixed << setprecision(1);
-	fStreamTro << fixed  << setprecision(1);
 	for( i = 0; i < vpProteinCombined.size(); ++i )
 	{
 		if(vpProteinCombined[i]->getValidity() )
@@ -196,17 +150,14 @@ bool ProjectInfo::writeFileTAB( string sTabFilename )
 					iQuantifiedPeptidesTemp = vCurrentReplicate[k].getQuantifiedPeptides();
 					if( bValidityTemp )
 					{
-						ossConfidenceInterval.str("");
-						ossConfidenceInterval << '[' << dLowerLimitCITemp << ", " << dUpperLimitCITemp << ']';
 						fStreamTro << dLog2RatioTemp << '\t'
-							<< ossConfidenceInterval.str() << '\t'
-							<< dLowerLimitCITemp << '\t' << dUpperLimitCITemp << '\t'
+							<< dLowerLimitCITemp << '\t'
+							<< dUpperLimitCITemp << '\t'
 							<< iQuantifiedPeptidesTemp << '\t';
 					}
 					else
 					{
 						fStreamTro << sNAstring << '\t'
-							<< sNAstring << '\t'
 							<< sNAstring << '\t'
 							<< sNAstring << '\t'
 							<< sNAstring << '\t';
@@ -216,17 +167,14 @@ bool ProjectInfo::writeFileTAB( string sTabFilename )
 				iQuantifiedPeptidesTemp = vCurrentDirectComparison[j].getQuantifiedPeptides();
 				if( bValidityTemp )
 				{
-					ossConfidenceInterval.str("");
-					ossConfidenceInterval << '[' << dLowerLimitCITemp << ", " << dUpperLimitCITemp << ']';
 					fStreamTro << dLog2RatioTemp << '\t'
-						<< ossConfidenceInterval.str() << '\t'
-						<< dLowerLimitCITemp << '\t' << dUpperLimitCITemp << '\t'
+						<< dLowerLimitCITemp << '\t'
+						<< dUpperLimitCITemp << '\t'
 						<< iQuantifiedPeptidesTemp << '\t';
 				}
 				else
 				{
 					fStreamTro << sNAstring << '\t'
-						<< sNAstring << '\t'
 						<< sNAstring << '\t'
 						<< sNAstring << '\t'
 						<< sNAstring << '\t';
@@ -237,16 +185,13 @@ bool ProjectInfo::writeFileTAB( string sTabFilename )
 				vCurrentIndirectComparison[j].getEstimates(bValidityTemp, dLog2RatioTemp, dLowerLimitCITemp, dUpperLimitCITemp);
 				if( bValidityTemp )
 				{
-					ossConfidenceInterval.str("");
-					ossConfidenceInterval << '[' << dLowerLimitCITemp << ", " << dUpperLimitCITemp << ']';
 					fStreamTro << dLog2RatioTemp << '\t'
-						<< ossConfidenceInterval.str() << '\t'
-						<< dLowerLimitCITemp << '\t' << dUpperLimitCITemp << '\t';
+						<< dLowerLimitCITemp << '\t'
+						<< dUpperLimitCITemp << '\t';
 				}
 				else
 				{
 					fStreamTro << sNAstring << '\t'
-						<< sNAstring << '\t'
 						<< sNAstring << '\t'
 						<< sNAstring << '\t';
 				}				
@@ -343,8 +288,6 @@ bool ProjectInfo::setupTemplateProteinCombined( string sProRataCombineXMLfilenam
 	
 	string sTemp;
 	istringstream issStream;
-	unsigned int i;
-	unsigned int j;
 
 	
 
@@ -413,9 +356,8 @@ bool ProjectInfo::setupTemplateProteinCombined( string sProRataCombineXMLfilenam
 		ProteinDirectComparison::setLnLikehoodCutOffset( dLnLikelihoodCutoffOffset );
 	}
 	
-	// save the normalization config for printout in the output file
-	ostringstream ossNormalizationPrintOut;
 
+	
 	// loop thru all DIRECT_COMPARISON elements	
 	for( txnDirect = txnDirect->FirstChild( "DIRECT_COMPARISON" ); txnDirect; txnDirect = txnDirect->NextSibling( "DIRECT_COMPARISON" )  )
 	{
@@ -451,13 +393,8 @@ bool ProjectInfo::setupTemplateProteinCombined( string sProRataCombineXMLfilenam
 		txsText = txnSubNode->FirstChild()->ToText();
 		currentDirectComparison.setDenominator( txsText->Value() );
 		
-
-
-		
 		TiXmlNode * txnReplicateNode = NULL;		
 		// loop thru all REPLIPCATE elements
-		string sNormalizationMethod;
-		double dNormalizationValue;
 		for( txnReplicateNode = txnDirect->FirstChild("REPLIPCATE"); txnReplicateNode; 
 				txnReplicateNode = txnReplicateNode->NextSibling("REPLIPCATE") )
 		{
@@ -473,40 +410,6 @@ bool ProjectInfo::setupTemplateProteinCombined( string sProRataCombineXMLfilenam
 			txsText = txnSubNode->FirstChild()->ToText();
 			currentProteinReplicate.setName( txsText->Value() );
 			
-			// set NORMALIZATION			
-			txnSubNode = txnReplicateNode->FirstChild( "NORMALIZATION" );
-			// no normalization, if there is no such node in Config
-			if ( !txnSubNode )
-			{
-			//	cout << "No normalization." << endl;
-				sNormalizationMethod = "None";
-				dNormalizationValue = 0;
-			}
-			else
-			{
-				txsText = txnSubNode->FirstChild("METHOD")->FirstChild()->ToText();
-				sNormalizationMethod = txsText->Value();
-				if(	sNormalizationMethod == "Plus" || 
-					sNormalizationMethod == "Minus" ||
-					sNormalizationMethod == "Median" )
-				{
-					sTemp = txnSubNode->FirstChild("VALUE")->FirstChild()->ToText()->Value();
-					issStream.clear();
-					issStream.str( sTemp );
-					issStream >> dNormalizationValue;
-				}
-				else
-				{
-					cout << "Error: cannot recognize the normalization method: " << sNormalizationMethod << ". No normalization will be performed" << endl;
-					cout << "Help: valid normalization methods include \"Median\", \"Plus\" and \"Minus\"." << endl;
-					sNormalizationMethod = "None";
-					dNormalizationValue = 0;
-				}
-	
-			}
-		
-
-
 			// get QPR filename
 			txnSubNode = txnReplicateNode->FirstChild( "QPR_FILE" );
 			if ( ! txnSubNode )
@@ -526,70 +429,8 @@ bool ProjectInfo::setupTemplateProteinCombined( string sProRataCombineXMLfilenam
 				return false;
 			}
 
-			// compute the normalization value for the normalization method "Median"
-			double dOriginalMedian = 0;
-			double dNewMedian = 0;
-			bool bNormalizationByMedian = false;
-			if( sNormalizationMethod == "Median" )
-			{
-				bNormalizationByMedian = true;
-				vector< string > vsCurrentLocusList;
-				pCurrentProteomeInfo->getLocusList( vsCurrentLocusList );
-				vector< double > vdProteinLogRatioList;
-				for( i = 0; i < vsCurrentLocusList.size(); i++ )
-				{
-					vector< ProteinInfo * > tempProteinInfoList = pCurrentProteomeInfo->getProteinInfo4Locus( vsCurrentLocusList[i] );
-					for( j = 0; j < tempProteinInfoList.size(); j++ )
-					{
-						vdProteinLogRatioList.push_back( tempProteinInfoList[j]->getLog2Ratio() );
-					}
-
-				}
-				sort(vdProteinLogRatioList.begin(), vdProteinLogRatioList.end());
-
-				if( vdProteinLogRatioList.size() < 3 )
-				{
-					cout << "WARNING: too few proteins are quantified and no normalization will be performed with the Median method." << endl;
-					sNormalizationMethod = "None";
-					dNormalizationValue = 0;
-				}
-				else
-				{
-					// compute the median
-					dOriginalMedian =  vdProteinLogRatioList[(int)vdProteinLogRatioList.size()/2];
-					// compute the shift constant
-					dNewMedian = dNormalizationValue;
-					dNormalizationValue = dNewMedian - dOriginalMedian;
-					sNormalizationMethod = "Plus";
-				}
-			}
-
-			currentProteinReplicate.setProteomeInfo( pCurrentProteomeInfo, sNormalizationMethod, dNormalizationValue  );
-
-			ossNormalizationPrintOut  << "Replicate, " << currentProteinReplicate.getName() <<
-			       ", in Direct Comparison, " << currentDirectComparison.getName() << ", is " 
-			       << fixed  << setprecision(1);
-			if(bNormalizationByMedian)
-			{
-				ossNormalizationPrintOut << "normalized by shifting log2ratio median from " 
-					<< dOriginalMedian << " to " << dOriginalMedian + currentProteinReplicate.getNormalizationValue() << "." <<endl;
-			}
-			else if( sNormalizationMethod == "Plus" )  
-			{
-				ossNormalizationPrintOut << "normalized by adding " 
-					<< currentProteinReplicate.getNormalizationValue() << " to original log2ratios." << endl;
-			}
-			else if( sNormalizationMethod == "Minus" ) 
-			{
-				ossNormalizationPrintOut << "normalized by substracting " << currentProteinReplicate.getNormalizationValue() << " from original log2ratios." << endl;
-			}
-			else
-			{
-				ossNormalizationPrintOut << "is NOT normalized." << endl;
-			}
-			
-			// save pCurrentProteomeInfo 
 			vpProteomeInfo.push_back( pCurrentProteomeInfo );
+			currentProteinReplicate.setProteomeInfo( pCurrentProteomeInfo );
 			
 			if( !currentDirectComparison.addReplicate( currentProteinReplicate ) )
 			{
@@ -605,9 +446,9 @@ bool ProjectInfo::setupTemplateProteinCombined( string sProRataCombineXMLfilenam
 		}
 	}
 
-	sNormalizationPrintOut = ossNormalizationPrintOut.str();
 
 	// determine if there is an indirect comparison in this project
+	
 	TiXmlNode * txnIndirect = txnRoot->FirstChild( "COMBINE_DIRECT_COMPARISONS" );
 	if ( txnIndirect )
 	{
@@ -694,6 +535,7 @@ bool ProjectInfo::setupTemplateProteinCombined( string sProRataCombineXMLfilenam
 			}
 		}
 	}
+	
 	// If everything goes fine return 0.
 	return true;
 

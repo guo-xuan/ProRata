@@ -36,7 +36,6 @@ bool ProteinIndirectComparison::testDirectComparison(
 		return false;
 	}
 
-	/*
 	if( directComparison0.getMLEMinLog2Ratio() != directComparison1.getMLEMinLog2Ratio() )
 	{
 		cout << "ERROR: the two direct comparison must have the same minimum protein log2ratio." << endl;
@@ -48,7 +47,7 @@ bool ProteinIndirectComparison::testDirectComparison(
 		cout << "ERROR: the two direct comparison must have the same maximum protein log2ratio." << endl;
 		return false;
 	}
-	*/
+	
 	if( directComparison0.getLog2RatioDiscretization() != directComparison1.getLog2RatioDiscretization() )
 	{
 		cout << "ERROR: the two direct comparison must have the same protein Log2RatioDiscretization." << endl;
@@ -85,41 +84,28 @@ bool ProteinIndirectComparison::runQuantification( string sInputLocus,
 	vector<double> vdLnLikelihoodDC0;	
 	vector<double> vdLog2RatioDC1;
 	vector<double> vdLnLikelihoodDC1;
-	int i;
-	int j;
 
 	if( !directComparison0.getProfileLikelihoodCurve(vdLog2RatioDC0, vdLnLikelihoodDC0) )
-	{
-		cout << "ERROR: directComparison0.getProfileLikelihoodCurve(vdLog2RatioDC0, vdLnLikelihoodDC0) " << endl;
 		return false;
-	}
 	
 	if( !directComparison1.getProfileLikelihoodCurve(vdLog2RatioDC1, vdLnLikelihoodDC1) )
-	{
-		cout << "ERROR: directComparison1.getProfileLikelihoodCurve(vdLog2RatioDC1, vdLnLikelihoodDC1)" << endl;
 		return false;
-	}
 
-	/*
 	if( vdLog2RatioDC0.size() != vdLog2RatioDC1.size() )
-	{
-		cout << "ERROR: vdLog2RatioDC0.size() != vdLog2RatioDC1.size() " << endl;
 		return false;
-	}
 	
+	int i;
 	for( i = 0; i < vdLog2RatioDC0.size(); ++i )
 	{
 		if( fabs(vdLog2RatioDC0[i] - vdLog2RatioDC1[i]) > 0.001 )
-		{
-			cout << "ERROR: fabs(vdLog2RatioDC0[i] - vdLog2RatioDC1[i]) > 0.001 " << endl;
 			return false;
-		}
 	}
-	*/
+
 	
 	// combine every log2ratio from comparison 0 with every log2ratio from comparison 1 
 	vector<double> vdLog2RatioAll;
 	vector<double> vdLnLikelihoodAll;	
+	int j;
 	for( i = 0; i < vdLog2RatioDC0.size(); ++i )
 	{
 		for( j = 0; j < vdLog2RatioDC1.size(); ++j )
@@ -246,9 +232,6 @@ bool ProteinIndirectComparison::runQuantification( string sInputLocus,
 		dUpperLimitCI = 0;
 	if( dUpperLimitCI > dMLEMaxLog2Ratio )
 		dUpperLimitCI = dMLEMaxLog2Ratio;
-
-	if( fabs( dLog2Ratio ) < 0.000000001 )
-		dLog2Ratio = 0;
 
 	/*
 	 * Determine the validity of this protein according to the filterin criteria
